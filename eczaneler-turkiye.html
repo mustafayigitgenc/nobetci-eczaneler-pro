@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nöbetçi Eczaneler Mobil Test</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<style>
+  html, body, #map { height: 100%; margin: 0; padding: 0; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+  function showError(msg) {
+    alert(msg);
+    console.error(msg);
+  }
+
+  if (!navigator.geolocation) {
+    showError("Tarayıcınız konum özelliğini desteklemiyor.");
+  } else {
+    navigator.geolocation.getCurrentPosition(position => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      const map = L.map('map').setView([lat, lon], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      L.marker([lat, lon]).addTo(map).bindPopup("Sen buradasın").openPopup();
+
+      fetch(`https://nobetci-eczane-api-turkiye.p.rapidapi.com/pharmacies-on-duty/locations?latitude=${lat}&longitude=${lon}`, {
+        headers: {
+          'x-rapidapi-host': 'nobetci-eczane-api-turkiye.p.rapidapi.com',
+          'x-rapidapi-key': '5f819092cdmshf31332e54774b7cp172e43jsn629294045b45'
+        }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("API yanıtı hatalı: " + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+          data.data.forEach(eczane => {
+            const latE = eczane.latitude;
+            const lonE = eczane.longitude;
+            const name = eczane.pharmacyName;
+            const address = eczane.address;
+            const phone = eczane.phone;
+            if(latE && lonE) {
+              L.marker([latE, lonE]).addTo(map)
+                .bindPopup(`<b>${name}</b><br>${address}<br>Tel: ${phone}`);
+            }
+          });
+        } else {
+          showError("Bugün için nöbetçi eczane bulunamadı.");
+        }
+      })
+      .catch(err => showError("Veri alınırken hata oluştu: " + err.message));
+
+    }, err => {
+      showError("Konum alınamadı: " + err.message);
+    });
+  }
+</script>
+</body>
+</html>
