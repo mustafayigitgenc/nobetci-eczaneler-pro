@@ -22,6 +22,3 @@ Güncel nöbetçi eczane verileri, güvenilir bir API üzerinden anlık olarak a
 4. İstediğiniz eczaneye tıklayarak detaylı bilgilerine ulaşabilirsiniz.
 
 ---
-
-## Katkıda Bulunma
-Projeye katkıda bulu
